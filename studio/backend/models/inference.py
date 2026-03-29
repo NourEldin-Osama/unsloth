@@ -130,7 +130,10 @@ class LoadResponse(BaseModel):
         ..., description = "Inference parameters (temperature, top_p, top_k, min_p)"
     )
     context_length: Optional[int] = Field(
-        None, description = "Model's native context length (from GGUF metadata)"
+        None, description = "Effective (currently loaded) context length"
+    )
+    max_context_length: Optional[int] = Field(
+        None, description = "Model's native maximum context length (from GGUF metadata)"
     )
     supports_reasoning: bool = Field(
         False,
@@ -204,7 +207,10 @@ class InferenceStatusResponse(BaseModel):
         False, description = "Whether the active model supports tool calling"
     )
     context_length: Optional[int] = Field(
-        None, description = "Context length of the active model"
+        None, description = "Effective (currently loaded) context length of the active model"
+    )
+    max_context_length: Optional[int] = Field(
+        None, description = "Model's native maximum context length (from GGUF metadata)"
     )
 
 

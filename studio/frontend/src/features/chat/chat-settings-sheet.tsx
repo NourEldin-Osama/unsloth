@@ -277,6 +277,7 @@ export function ChatSettingsPanel({
   const isMobile = useIsMobile();
   const isGguf = useChatRuntimeStore((s) => s.activeGgufVariant) != null;
   const ggufContextLength = useChatRuntimeStore((s) => s.ggufContextLength);
+  const ggufMaxContextLength = useChatRuntimeStore((s) => s.ggufMaxContextLength);
   const kvCacheDtype = useChatRuntimeStore((s) => s.kvCacheDtype);
   const setKvCacheDtype = useChatRuntimeStore((s) => s.setKvCacheDtype);
   const loadedKvCacheDtype = useChatRuntimeStore((s) => s.loadedKvCacheDtype);
@@ -284,6 +285,8 @@ export function ChatSettingsPanel({
   const setCustomContextLength = useChatRuntimeStore((s) => s.setCustomContextLength);
 
   const ctxDisplayValue = customContextLength ?? ggufContextLength ?? "";
+  const ctxSliderMax = ggufMaxContextLength ?? ggufContextLength ?? 4096;
+  const ctxSliderValue = typeof ctxDisplayValue === "number" ? ctxDisplayValue : (ggufContextLength ?? ctxSliderMax);
   const kvDirty = kvCacheDtype !== loadedKvCacheDtype;
   const ctxDirty = customContextLength !== null;
   const modelSettingsDirty = kvDirty || ctxDirty;
@@ -483,7 +486,7 @@ export function ChatSettingsPanel({
                         value={typeof ctxDisplayValue === "number" ? ctxDisplayValue : (ggufContextLength ?? "")}
                         placeholder="..."
                         min={128}
-                        max={ggufContextLength ?? undefined}
+                        max={ctxSliderMax}
                         step={1024}
                         className="h-6 w-[100px] text-right text-xs tabular-nums"
                         onChange={(e) => {
@@ -494,7 +497,7 @@ export function ChatSettingsPanel({
                           }
                           const v = parseInt(raw, 10);
                           if (!Number.isNaN(v) && v >= 0) {
-                            const maxCtx = ggufContextLength ?? Infinity;
+                            const maxCtx = ggufMaxContextLength ?? ggufContextLength ?? Infinity;
                             const clamped = Math.min(v, maxCtx);
                             setCustomContextLength(clamped === (ggufContextLength ?? 0) ? null : clamped);
                           }
@@ -503,9 +506,9 @@ export function ChatSettingsPanel({
                     </div>
                     <Slider
                       min={1024}
-                      max={ggufContextLength ?? 4096}
+                      max={ctxSliderMax}
                       step={1024}
-                      value={[Math.min(typeof ctxDisplayValue === "number" ? ctxDisplayValue : (ggufContextLength ?? 4096), ggufContextLength ?? 4096)]}
+                      value={[Math.min(ctxSliderValue, ctxSliderMax)]}
                       onValueChange={([v]) => {
                         setCustomContextLength(v === (ggufContextLength ?? 0) ? null : v);
                       }}

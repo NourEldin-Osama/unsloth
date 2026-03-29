@@ -245,6 +245,7 @@ export function useChatModelRuntime() {
           reasoningAlwaysOn,
           supportsTools,
           ggufContextLength: statusRes.is_gguf ? (statusRes.context_length ?? null) : null,
+          ggufMaxContextLength: statusRes.is_gguf ? (statusRes.max_context_length ?? statusRes.context_length ?? null) : null,
         });
 
         // Set reasoning default for Qwen3.5 small models
@@ -415,6 +416,12 @@ export function useChatModelRuntime() {
             const nativeCtx = loadResponse.is_gguf
               ? (loadResponse.context_length ?? 131072)
               : null;
+            // The max context length is the model's native (maximum) context from metadata.
+            // The backend returns it as max_context_length; fall back to context_length
+            // for backward compatibility with older backend versions.
+            const maxCtx = loadResponse.is_gguf
+              ? (loadResponse.max_context_length ?? loadResponse.context_length ?? 131072)
+              : null;
             // Keep customContextLength if the user set one and it differs
             // from the model's native context; otherwise clear it so the
             // display shows the native value without a dirty marker.
@@ -425,6 +432,7 @@ export function useChatModelRuntime() {
             const reasoningAlwaysOn = loadResponse.reasoning_always_on ?? false;
             useChatRuntimeStore.setState({
               ggufContextLength: nativeCtx,
+              ggufMaxContextLength: maxCtx,
               supportsReasoning: loadResponse.supports_reasoning ?? false,
               reasoningAlwaysOn,
               reasoningEnabled: reasoningAlwaysOn ? true : reasoningDefault,
