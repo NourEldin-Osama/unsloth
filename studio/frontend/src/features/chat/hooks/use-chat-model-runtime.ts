@@ -245,7 +245,9 @@ export function useChatModelRuntime() {
           reasoningAlwaysOn,
           supportsTools,
           ggufContextLength: statusRes.is_gguf ? (statusRes.context_length ?? null) : null,
-          ggufMaxContextLength: statusRes.is_gguf ? (statusRes.max_context_length ?? statusRes.context_length ?? null) : null,
+          // On page refresh the store is cold; use the currently loaded context length
+          // as the best-effort device max (we can't know the original auto-load cap).
+          ggufMaxContextLength: statusRes.is_gguf ? (statusRes.context_length ?? null) : null,
         });
 
         // Set reasoning default for Qwen3.5 small models
@@ -375,7 +377,7 @@ export function useChatModelRuntime() {
               previousWasUnloaded = true;
             }
 
-            const { chatTemplateOverride, kvCacheDtype, customContextLength, ggufContextLength } = useChatRuntimeStore.getState();
+            const { chatTemplateOverride, kvCacheDtype, customContextLength, ggufContextLength, ggufMaxContextLength: prevDeviceMaxCtx } = useChatRuntimeStore.getState();
             // GGUF: use custom context length, or 0 = model's native context
             // Non-GGUF: use the Max Seq Length slider value
             const effectiveMaxSeqLength = customContextLength != null
@@ -416,11 +418,15 @@ export function useChatModelRuntime() {
             const nativeCtx = loadResponse.is_gguf
               ? (loadResponse.context_length ?? 131072)
               : null;
-            // The max context length is the model's native (maximum) context from metadata.
-            // The backend returns it as max_context_length; fall back to context_length
-            // for backward compatibility with older backend versions.
+            // The device-capped maximum is the effective context length produced by an
+            // auto-load (n_ctx=0).  For a custom load the backend is given an explicit
+            // context, so its response context_length is just the user's chosen value –
+            // preserve the device max that was recorded on the previous auto-load so the
+            // slider can always reach back up to the device limit.
             const maxCtx = loadResponse.is_gguf
-              ? (loadResponse.max_context_length ?? loadResponse.context_length ?? 131072)
+              ? (customContextLength == null
+                ? nativeCtx   // auto-load: effective ctx IS the device max
+                : (prevDeviceMaxCtx ?? nativeCtx))  // custom-load: keep device max
               : null;
             // Keep customContextLength if the user set one and it differs
             // from the model's native context; otherwise clear it so the

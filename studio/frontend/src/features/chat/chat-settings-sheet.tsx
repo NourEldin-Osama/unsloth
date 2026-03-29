@@ -53,6 +53,8 @@ import { Switch } from "@/components/ui/switch";
 export const defaultInferenceParams = DEFAULT_INFERENCE_PARAMS;
 export type { InferenceParams } from "./types/runtime";
 
+const DEFAULT_CONTEXT_LENGTH = 4096;
+
 export interface Preset {
   name: string;
   params: InferenceParams;
@@ -285,8 +287,8 @@ export function ChatSettingsPanel({
   const setCustomContextLength = useChatRuntimeStore((s) => s.setCustomContextLength);
 
   const ctxDisplayValue = customContextLength ?? ggufContextLength ?? "";
-  const ctxSliderMax = ggufMaxContextLength ?? ggufContextLength ?? 4096;
-  const ctxSliderValue = typeof ctxDisplayValue === "number" ? ctxDisplayValue : (ggufContextLength ?? ctxSliderMax);
+  const ctxSliderMax = ggufMaxContextLength ?? ggufContextLength ?? DEFAULT_CONTEXT_LENGTH;
+  const ctxSliderValue = typeof ctxDisplayValue === "number" ? ctxDisplayValue : ctxSliderMax;
   const kvDirty = kvCacheDtype !== loadedKvCacheDtype;
   const ctxDirty = customContextLength !== null;
   const modelSettingsDirty = kvDirty || ctxDirty;
